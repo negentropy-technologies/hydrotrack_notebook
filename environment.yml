@@ -1,0 +1,44 @@
+name: hydrotrack_notebook
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  # Geoespacial
+  - rasterio>=1.4.3
+  - shapely>=2.1.2
+  # Científico
+  - numpy>=2.3.5
+  - scipy>=1.16.3
+  - scikit-learn>=1.7.2
+  - matplotlib>=3.10
+  # Datos e imagen
+  - pillow>=12.0.0
+  - requests>=2.32.5
+  - python-dotenv>=1.2.1
+  # Notebook
+  - jupyter>=1.1.1
+  - ipykernel>=6.29
+  # PyTorch — CPU (sin CUDA). Para GPU ver instrucciones abajo.
+  - pytorch>=2.7.1
+  - torchvision>=0.22.1
+  - cpuonly
+  - pip:
+      - transformers>=5.10.0
+      - safetensors>=0.7.0
+      - huggingface-hub>=1.17.0
+
+# ─────────────────────────────────────────────────────────────────
+# Instalar:
+#   conda env create -f environment.yml
+#   conda activate hydrotrack_notebook
+#
+# Para GPU con CUDA 12.8 (versión validada con SAM3 Tracker):
+#   Reemplaza las líneas pytorch/torchvision/cpuonly por:
+#   conda install pytorch torchvision pytorch-cuda=12.8 -c pytorch -c nvidia
+#
+# NOTA: SAM3 Tracker requiere torch>=2.7.1+cu128.
+# CUDA 12.1 o 12.4 no son compatibles con esta versión del modelo.
+# ─────────────────────────────────────────────────────────────────

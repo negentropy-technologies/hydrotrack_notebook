@@ -1,0 +1,35 @@
+# Core
+pyyaml>=6.0.2
+rasterio>=1.4.3
+numpy>=2.3.5
+scipy>=1.16.3
+scikit-learn>=1.7.2
+matplotlib>=3.10
+shapely>=2.1.2
+python-dotenv>=1.2.1
+requests>=2.32.5
+Pillow>=12.0.0
+pyproj>=3.7.2
+
+# AI / HuggingFace
+huggingface-hub>=1.17.0
+safetensors>=0.7.0
+transformers>=5.10.0
+
+# PyTorch
+# CPU fallback (Colab Free, laptops sin GPU):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# GPU — CUDA 12.8 (versión validada con SAM3 Tracker, torch 2.7.1+cu128):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# NOTA: CUDA 12.1 / 12.4 no son compatibles con torch 2.7.1+cu128 + SAM3.
+torch>=2.7.1
+torchvision>=0.22.1
+
+# Análisis y visualización
+pandas>=2.2
+seaborn>=0.13
+
+# Notebook
+jupyter>=1.1.1
+ipykernel>=6.29
+ipywidgets>=8.1

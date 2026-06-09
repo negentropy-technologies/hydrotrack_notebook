@@ -1,0 +1,128 @@
+# config.yml — Parámetros del pipeline HydroTrack Notebook
+# Edita este archivo para adaptar el notebook a otro cuerpo de agua o sensor.
+
+lake:
+  name: "Laguna de Aculeo"
+  lat: -33.8457
+  lon: -70.9170
+  altitude_m: 356
+  area_historical_max_km2: 10.3
+  # Centroide en UTM Zona 19N (EPSG 32619); northing negativo = hemisferio sur
+  centroid_x_epsg32619: 322635.0
+  centroid_y_epsg32619: -3746696.0
+  # Filtros de componentes conectados en gmm_detect y sam3_detect
+  area_max_km2: 12.0
+  area_min_km2: 0.05
+  centroid_search_radius_m: 1000.0
+
+landsat:
+  # Colección activa — cambiar a otro m2m_name de la sección `datasets` para otro sensor
+  dataset: "landsat_ot_c2_l2"
+  wrs_path: 233
+  wrs_row: 83
+  scale_factor: 0.0001   # factor de escala reflectancia C2 L2
+  pixel_area_km2: 0.0009  # píxel 30 m × 30 m
+  # Bandas activas según el dataset seleccionado (ver sección datasets)
+  bands:
+    green: "B3"   # Verde · B3 (L8/9) · B2 (L7 / L4-5)
+    nir:   "B5"   # NIR   · B5 (L8/9) · B4 (L7 / L4-5)
+    swir1: "B6"   # SWIR1 · B6 (L8/9) · B5 (L7 / L4-5)
+
+# ── Catálogo de colecciones Landsat C2 L2 disponibles en USGS M2M ─────────────
+# Para cambiar de sensor: 1) actualiza landsat.dataset  2) actualiza landsat.bands
+datasets:
+  landsat_89:
+    m2m_name: "landsat_ot_c2_l2"
+    description: "Landsat 8/9 OLI/TIRS · C2 L2 · 2013–presente"
+    date_range: ["2013-04-11", null]
+    bands: {green: "B3", nir: "B5", swir1: "B6"}
+
+  landsat_7:
+    m2m_name: "landsat_etm_c2_l2"
+    description: "Landsat 7 ETM+ · C2 L2 · 1999–2022 (SLC-off desde mayo 2003)"
+    date_range: ["1999-04-15", "2022-04-06"]
+    bands: {green: "B2", nir: "B4", swir1: "B5"}
+
+  landsat_45:
+    m2m_name: "landsat_tm_c2_l2"
+    description: "Landsat 4/5 TM · C2 L2 · 1982–2013"
+    date_range: ["1982-08-22", "2013-06-05"]
+    bands: {green: "B2", nir: "B4", swir1: "B5"}
+
+m2m:
+  api_url: "https://m2m.cr.usgs.gov/api/api/json/stable"
+  search_window_days: 10
+  default_cloud_max: 70
+  bbox:
+    lat_min: -34.1
+    lat_max: -33.6
+    lon_min: -71.2
+    lon_max: -70.6
+
+qa:
+  # Bits problemáticos en QA_PIXEL — Landsat Collection 2 Level-2 (USGS C2 L2)
+  # Ref: https://www.usgs.gov/landsat-missions/landsat-collection-2-quality-assessment-bands
+  #
+  # Bit 0: Fill          → píxel sin datos (borde de escena)
+  # Bit 1: Dilated Cloud → buffer de seguridad alrededor de nubes
+  # Bit 3: Cloud         → nube detectada (alta confianza en Landsat 8/9)
+  # Bit 4: Cloud Shadow  → sombra de nube
+  # Bit 5: Snow          → nieve/hielo (poco frecuente en Aculeo pero posible en invierno)
+  #
+  # NO se enmascaran:
+  #   Bit 6 (Clear = 1 → píxel limpio)   — enmascararlo eliminaría los píxeles buenos
+  #   Bit 7 (Water  = 1 → agua detectada) — enmascararlo eliminaría el lago
+  bad_bits: [0, 1, 3, 4, 5]
+
+  # QA_RADSAT: saturación radiométrica en bandas espectrales
+  # Bits relevantes para MNDWI en Landsat 8/9:
+  #   Bit 2 → Band 3 (Verde / B3) saturada
+  #   Bit 5 → Band 6 (SWIR1 / B6) saturada
+  # Un píxel saturado en B3 o B6 produce valores de índice no físicos.
+  radsat_bits_b3_b6: 0b0000000000100100   # mask = 0x0024 = 36 decimal
+
+  # QA_AEROSOL: calidad de corrección atmosférica (opcional)
+  # Bits 6-7 codifican nivel de aerosoles: 11 (= 3) → alta contaminación
+  # Se recomienda filtrar escenas con aerosol_level >= 3 sobre zonas costeras
+  # o en días de incendio. Para Aculeo (zona semiárida interior) es informativo.
+  aerosol_high_mask: 0b11000000   # bits 6-7 ambos = 1 → aerosol alto
+
+indices:
+  # Rangos calibrados sobre 705 escenas 2013-2026.
+  # vcenter: frontera estadística tierra/agua para cada índice.
+  mndwi:
+    vmin: -0.61
+    vcenter: 0.00
+    vmax: 0.18
+  ndwi:
+    vmin: -0.75
+    vcenter: -0.39
+    vmax: -0.04
+
+gmm:
+  min_valid_ratio: 0.15       # fracción mínima de píxeles sin nube
+  n_components: 2
+  max_iter: 200
+  random_state: 42
+  n_init: 3
+  max_sample_size: 50000
+  min_separation_sigma: 2.5   # separación mínima entre modos GMM
+  sarle_bimodality_threshold: 0.45
+  min_pixels_per_component: 9
+  min_compactness: 0.03
+  threshold_range:
+    # Invierno austral: suelo húmedo desplaza el umbral agua hacia valores más bajos
+    winter_austral:
+      months: [4, 5, 6, 7, 8, 9]
+      lo: -0.35
+      hi: 0.05
+    summer_austral:
+      lo: -0.40
+      hi: 0.10
+
+story_dates:
+  - "2013-07-17"
+  - "2017-01-17"
+  - "2018-10-19"
+  - "2019-01-23"
+  - "2026-04-24"

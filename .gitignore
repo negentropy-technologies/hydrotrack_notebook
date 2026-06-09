@@ -1,0 +1,29 @@
+# Credenciales
+.env
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# Entornos virtuales
+.venv/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+notebook/*.bak
+
+# data/: ignorar todo excepto geometría de cuenca y placeholder de escenas
+data/*
+!data/cuenca_aculeo_411.geojson
+!data/scenes/
+data/scenes/*
+!data/scenes/.gitkeep
